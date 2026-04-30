@@ -138,19 +138,15 @@ body {
     width: 280px;
     height: 280px;
     border-radius: 50%;
-    padding: 4px;
-    background: var(--gradient-1);
-    position: relative;
+    overflow: hidden;
     flex-shrink: 0;
-    box-shadow: 0 0 15px rgba(99, 102, 241, 0.3);
+    border: 4px solid var(--border);
 }
 
 .hero-photo img {
     width: 100%;
     height: 100%;
     object-fit: cover;
-    border-radius: 50%;
-    border: 4px solid var(--bg-primary);
     display: block;
 }
 
