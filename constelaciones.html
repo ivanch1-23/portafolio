@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Planetario Interactivo</title>
+  <style>
+    body {
+      margin: 0;
+      overflow: hidden;
+      background: radial-gradient(circle at center, #000010, #000000);
+      font-family: Arial, sans-serif;
+      color: white;
+    }
+    canvas {
+      display: block;
+    }
+    #infoPanel {
+      position: absolute;
+      background: rgba(0,0,0,0.6);
+      padding: 15px;
+      border-radius: 10px;
+      width: 90%;
+      max-width: 350px;
+      display: none;
+      box-sizing: border-box;
+    }
+    #infoPanel h2 {
+      margin-top: 0;
+      font-size: 1.2em;
+    }
+    #backBtn {
+      margin-top: 10px;
+      padding: 10px 15px;
+      border: none;
+      border-radius: 5px;
+      background: #ffcc00;
+      cursor: pointer;
+      font-size: 1em;
+      font-weight: bold;
+    }
+
+    /* 📱 Responsive */
+    @media (min-width: 768px) {
+      #infoPanel {
+        top: 50%;
+        right: 30px;
+        transform: translateY(-50%);
+      }
+    }
+    @media (max-width: 767px) {
+      #infoPanel {
+        bottom: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+      }
+    }
+  </style>
+</head>
+<body>
+  <canvas id="space"></canvas>
+
+  <div id="infoPanel">
+    <h2 id="planetName"></h2>
+    <p id="planetDesc"></p>
+    <button id="backBtn">🔙 Volver</button>
+  </div>
+
+  <script>
+    const canvas = document.getElementById("space");
+    const ctx = canvas.getContext("2d");
+
+    function resizeCanvas() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    }
+    resizeCanvas();
+    window.addEventListener("resize", resizeCanvas);
+
+    const mouse = { x: 0, y: 0 };
+    window.addEventListener("mousemove", e => {
+      mouse.x = e.clientX;
+      mouse.y = e.clientY;
+    });
+
+    // 📱 Soporte táctil
+    window.addEventListener("touchmove", e => {
+      if (e.touches.length > 0) {
+        mouse.x = e.touches[0].clientX;
+        mouse.y = e.touches[0].clientY;
+      }
+    });
+
+    // ⭐ Estrellas
+    const stars = [];
+    for (let i = 0; i < 100; i++) {
+      stars.push({
+        x: Math.random() * canvas.width,
+        y: Math.random() * canvas.height,
+        r: Math.random() * 2,
+        alpha: Math.random()
+      });
+    }
+
+    // 🌍 Sistema Solar
+    let centerX = () => canvas.width / 2;
+    let centerY = () => canvas.height / 2;
+    const planets = [
+      { name: "Mercurio", radius: 60, size: 4, speed: 0.04, angle: 0, color: "gray", desc: "Planeta más cercano al Sol." },
+      { name: "Venus", radius: 100, size: 7, speed: 0.03, angle: 0, color: "orange", desc: "El planeta más caliente." },
+      { name: "Tierra", radius: 150, size: 8, speed: 0.02, angle: 0, color: "blue", desc: "Nuestro hogar, la Tierra." },
+      { name: "Marte", radius: 200, size: 6, speed: 0.018, angle: 0, color: "red", desc: "El planeta rojo." },
+      { name: "Júpiter", radius: 260, size: 15, speed: 0.01, angle: 0, color: "brown", desc: "El planeta más grande." },
+      { name: "Saturno", radius: 320, size: 13, speed: 0.009, angle: 0, color: "goldenrod", desc: "Famoso por sus anillos." },
+      { name: "Urano", radius: 380, size: 11, speed: 0.007, angle: 0, color: "lightblue", desc: "Un gigante helado." },
+      { name: "Neptuno", radius: 440, size: 11, speed: 0.006, angle: 0, color: "darkblue", desc: "El más lejano." }
+    ];
+
+    let selectedPlanet = null;
+
+    // ⭐ Estrellas y constelaciones
+    function drawStars() {
+      stars.forEach(star => {
+        star.alpha += (Math.random() - 0.5) * 0.05;
+        star.alpha = Math.max(0.1, Math.min(1, star.alpha));
+
+        ctx.beginPath();
+        ctx.arc(star.x, star.y, star.r, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(255,255,255,${star.alpha})`;
+        ctx.fill();
+      });
+    }
+
+    function drawConstellations() {
+      let closestStar = null;
+      let minDist = Infinity;
+
+      stars.forEach(star => {
+        const dx = star.x - mouse.x;
+        const dy = star.y - mouse.y;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        if (dist < minDist) {
+          minDist = dist;
+          closestStar = star;
+        }
+      });
+
+      if (closestStar) {
+        stars.forEach(star => {
+          const dx = star.x - closestStar.x;
+          const dy = star.y - closestStar.y;
+          const dist = Math.sqrt(dx * dx + dy * dy);
+          if (dist < 120) {
+            ctx.beginPath();
+            ctx.moveTo(star.x, star.y);
+            ctx.lineTo(closestStar.x, closestStar.y);
+            ctx.strokeStyle = "rgba(255,255,255,0.2)";
+            ctx.stroke();
+          }
+        });
+      }
+    }
+
+    // 🌍 Dibujar planetas
+    function drawPlanets() {
+      // ☀️ Sol
+      ctx.beginPath();
+      ctx.arc(centerX(), centerY(), 20, 0, Math.PI * 2);
+      ctx.fillStyle = "yellow";
+      ctx.shadowBlur = 20;
+      ctx.shadowColor = "yellow";
+      ctx.fill();
+
+      planets.forEach(p => {
+        p.angle += p.speed;
+        const x = centerX() + Math.cos(p.angle) * p.radius;
+        const y = centerY() + Math.sin(p.angle) * p.radius;
+
+        // órbita
+        ctx.beginPath();
+        ctx.arc(centerX(), centerY(), p.radius, 0, Math.PI * 2);
+        ctx.strokeStyle = "rgba(255,255,255,0.1)";
+        ctx.stroke();
+
+        // planeta
+        ctx.beginPath();
+        ctx.arc(x, y, p.size, 0, Math.PI * 2);
+        ctx.fillStyle = p.color;
+        ctx.shadowBlur = 10;
+        ctx.shadowColor = p.color;
+        ctx.fill();
+
+        p.x = x; p.y = y;
+      });
+    }
+
+    // 🌍 Vista de planeta seleccionado
+    function drawSelectedPlanet() {
+      if (!selectedPlanet) return;
+
+      ctx.beginPath();
+      ctx.arc(centerX(), centerY(), 80, 0, Math.PI * 2);
+      ctx.fillStyle = selectedPlanet.color;
+      ctx.shadowBlur = 30;
+      ctx.shadowColor = selectedPlanet.color;
+      ctx.fill();
+
+      selectedPlanet.angle += 0.02;
+    }
+
+    // 🎬 Animación principal
+    function animate() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      drawStars();
+      drawConstellations();
+
+      if (selectedPlanet) {
+        drawSelectedPlanet();
+      } else {
+        drawPlanets();
+      }
+
+      requestAnimationFrame(animate);
+    }
+
+    animate();
+
+    // 🎯 Detectar clicks y toques en planetas
+    function checkPlanetSelection(mx, my) {
+      if (selectedPlanet) return;
+      for (let p of planets) {
+        const dx = mx - p.x;
+        const dy = my - p.y;
+        if (Math.sqrt(dx*dx + dy*dy) < p.size + 5) {
+          selectedPlanet = p;
+          document.getElementById("planetName").innerText = p.name;
+          document.getElementById("planetDesc").innerText = p.desc;
+          document.getElementById("infoPanel").style.display = "block";
+        }
+      }
+    }
+
+    canvas.addEventListener("click", e => checkPlanetSelection(e.clientX, e.clientY));
+    canvas.addEventListener("touchstart", e => {
+      if (e.touches.length > 0) {
+        checkPlanetSelection(e.touches[0].clientX, e.touches[0].clientY);
+      }
+    });
+
+    // 🔙 Botón para volver
+    document.getElementById("backBtn").addEventListener("click", () => {
+      selectedPlanet = null;
+      document.getElementById("infoPanel").style.display = "none";
+    });
+  </script>
+</body>
+</html>

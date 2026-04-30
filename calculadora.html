@@ -1,0 +1,392 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Calculadora Científica - Tema Oscuro</title>
+  <style>
+    :root{
+      --bg:#06070a;
+      --panel:#0b1220;
+      --glass: rgba(255,255,255,0.04);
+      --accent: linear-gradient(135deg,#7c3aed,#06b6d4);
+      --primary:#9aa8ff;
+      --accent-2:#06b6d4;
+      --text:#e6eef8;
+      --muted:rgba(230,238,248,0.6);
+      --danger:#ff6b6b;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%;background:radial-gradient(800px 400px at 10% 10%, rgba(124,58,237,0.06), transparent), radial-gradient(600px 300px at 90% 90%, rgba(6,182,212,0.04), transparent), var(--bg);margin:0;color:var(--text)}
+
+    .wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:28px}
+
+    .calculator{width:820px;max-width:98vw;background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));border-radius:14px;padding:18px;backdrop-filter: blur(6px);box-shadow: 0 12px 40px rgba(2,6,23,0.6);border:1px solid rgba(255,255,255,0.04);display:grid;grid-template-columns:1fr 320px;gap:18px}
+
+    /* Left - calculator panel */
+    .panel{background:var(--panel);border-radius:12px;padding:14px;border:1px solid rgba(255,255,255,0.02);display:flex;flex-direction:column;gap:12px}
+
+    header{display:flex;align-items:center;justify-content:space-between}
+    .title{font-weight:700;font-size:16px}
+    .subtitle{font-size:12px;color:var(--muted)}
+
+    .screen{background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));border-radius:10px;padding:12px;border:1px solid rgba(255,255,255,0.03);min-height:110px;display:flex;flex-direction:column;justify-content:center}
+    .expr{font-size:14px;color:var(--muted);text-align:right;min-height:20px;word-break:break-all}
+    .display{font-weight:800;font-size:36px;text-align:right;color:var(--text);word-break:break-all}
+    .sub{font-size:12px;color:var(--muted);text-align:right}
+
+    .keys{display:grid;grid-template-columns:repeat(6,1fr);gap:10px}
+    button.key{appearance:none;border:0;padding:12px;border-radius:10px;background:transparent;color:var(--text);font-weight:700;font-size:14px;cursor:pointer;transition:transform .06s ease, box-shadow .12s ease;outline:none;border:1px solid rgba(255,255,255,0.03)}
+    button.key:hover{transform:translateY(-3px)}
+    button.num{background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));}
+    button.op{background:linear-gradient(135deg,#2b2f46, #1b2133);color:var(--primary);}
+    button.fn{background:linear-gradient(135deg,#10131a,#0b1220);color:var(--accent-2)}
+    button.ac{background:linear-gradient(135deg,#2a0d0d,#3a0d0d);color:var(--danger)}
+    button.wide{grid-column:span 2}
+
+    /* Right - history panel */
+    .history{background:linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0.01));border-radius:12px;padding:14px;border:1px solid rgba(255,255,255,0.02);height:100%;overflow:auto}
+    .history h3{margin:0 0 8px 0}
+    .hist-item{padding:8px;border-radius:8px;margin-bottom:8px;background:linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0.01));border:1px solid rgba(255,255,255,0.02);}
+    .hist-item small{color:var(--muted)}
+
+    .footer{display:flex;justify-content:space-between;gap:12px;margin-top:8px}
+
+    /* small devices */
+    @media (max-width:900px){.calculator{grid-template-columns:1fr;}.history{height:240px}}
+
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="calculator" id="calcApp" aria-label="Calculadora científica">
+
+      <div class="panel">
+        <header>
+          <div>
+            <div class="title">Calculadora Científica</div>
+            <div class="subtitle">Tema oscuro · teclado completo · historial</div>
+          </div>
+          <div class="subtitle">Made with iv</div>
+        </header>
+
+        <div class="screen" id="screen">
+          <div class="expr" id="expr">&nbsp;</div>
+          <div class="display" id="display">0</div>
+          <div class="sub" id="sub">&nbsp;</div>
+        </div>
+
+        <div class="keys" id="keys">
+          <!-- row 1 -->
+          <button class="key fn" data-token="sin">sin</button>
+          <button class="key fn" data-token="cos">cos</button>
+          <button class="key fn" data-token="tan">tan</button>
+          <button class="key fn" data-token="ln">ln</button>
+          <button class="key fn" data-token="log">log</button>
+          <button class="key ac" data-token="AC">AC</button>
+
+          <!-- row 2 -->
+          <button class="key fn" data-token="sqrt">√</button>
+          <button class="key fn" data-token="^">x^y</button>
+          <button class="key fn" data-token="pow2">x²</button>
+          <button class="key fn" data-token="pi">π</button>
+          <button class="key fn" data-token="e">e</button>
+          <button class="key fn" data-token="del">←</button>
+
+          <!-- row 3 -->
+          <button class="key num" data-token="7">7</button>
+          <button class="key num" data-token="8">8</button>
+          <button class="key num" data-token="9">9</button>
+          <button class="key op" data-token="/">÷</button>
+          <button class="key fn" data-token="%">%</button>
+          <button class="key fn" data-token="abs">abs</button>
+
+          <!-- row 4 -->
+          <button class="key num" data-token="4">4</button>
+          <button class="key num" data-token="5">5</button>
+          <button class="key num" data-token="6">6</button>
+          <button class="key op" data-token="*">×</button>
+          <button class="key fn" data-token="(`">(</button>
+          <button class="key fn" data-token=")`">)</button>
+
+          <!-- row 5 -->
+          <button class="key num" data-token="1">1</button>
+          <button class="key num" data-token="2">2</button>
+          <button class="key num" data-token="3">3</button>
+          <button class="key op" data-token="-">−</button>
+          <button class="key fn" data-token="ANS">ans</button>
+          <button class="key fn" data-token="rand">rand</button>
+
+          <!-- row 6 -->
+          <button class="key wide num" data-token="0">0</button>
+          <button class="key num" data-token=".">.</button>
+          <button class="key op" data-token="+">+</button>
+          <button class="key op" data-token="=">=</button>
+        </div>
+
+        <div class="footer">
+          <div class="subtitle">Atajos: números, Enter = =, Backspace = ←</div>
+          <div class="subtitle">Resultados seguros con Math</div>
+        </div>
+      </div>
+
+      <aside class="history" id="history">
+        <h3>Historial</h3>
+        <div id="historyList"></div>
+        <div style="margin-top:8px;display:flex;gap:8px">
+          <button id="clearHist" class="key fn" style="flex:1">Limpiar historial</button>
+          <button id="exportHist" class="key fn" style="flex:1">Exportar</button>
+        </div>
+      </aside>
+
+    </div>
+  </div>
+
+  <script>
+    // Calculadora científica con parser (shunting-yard) + RPN evaluator.
+    (function(){
+      const exprEl = document.getElementById('expr');
+      const displayEl = document.getElementById('display');
+      const subEl = document.getElementById('sub');
+      const keys = document.getElementById('keys');
+      const historyList = document.getElementById('historyList');
+      const clearHistBtn = document.getElementById('clearHist');
+      const exportHistBtn = document.getElementById('exportHist');
+
+      let expression = '';
+      let lastAnswer = '';
+      let history = [];
+
+      // Tokenizer: numbers, functions, operators, parentheses
+      function tokenize(s){
+        const tokens = [];
+        const re = /\s*([0-9]*\.?[0-9]+|pi|e|sin|cos|tan|log|ln|sqrt|abs|rand|pow2|\^|\+|\-|\*|\/|%|\(|\)|\.|ANS)\s*/ig;
+        let m;
+        while((m = re.exec(s)) !== null){
+          tokens.push(m[1]);
+        }
+        return tokens;
+      }
+
+      // For user-friendly input mapping (we'll store expression as string with tokens separated)
+      function appendToken(t){
+        // map button tokens to expression text
+        if(t === 'AC') { expression=''; lastAnswer=''; update(); return; }
+        if(t === 'del') { expression = expression.slice(0,-1); update(); return; }
+        if(t === 'pi') { expression += 'pi'; update(); return; }
+        if(t === 'e') { expression += 'e'; update(); return; }
+        if(t === 'ANS' || t === 'ans') { expression += 'ANS'; update(); return; }
+        if(t === 'pow2'){ expression += '^2'; update(); return; }
+        if(t === 'rand'){ expression += '(rand)'; update(); return; }
+        if(t === '(`') { expression += '('; update(); return; }
+        if(t === ')`') { expression += ')'; update(); return; }
+        if(t === '%'){ expression += '%'; update(); return; }
+        // functions
+        const fns = ['sin','cos','tan','log','ln','sqrt','abs'];
+        if(fns.includes(t)) { expression += t + '('; update(); return; }
+        if(t === '^'){ expression += '^'; update(); return; }
+        // numbers and operators and dot
+        expression += t;
+        update();
+      }
+
+      function update(){
+        exprEl.textContent = expression || '\u00A0';
+        // short preview in sub
+        subEl.textContent = lastAnswer ? 'Últ: ' + lastAnswer : '';
+        renderDisplay('0');
+      }
+
+      function renderDisplay(v){ displayEl.textContent = String(v); }
+
+      // Shunting-yard to RPN
+      const precedence = { '^':4, '%':3, '*':3, '/':3, '+':2, '-':2 };
+      const rightAssoc = { '^': true };
+
+      function toRPN(tokens){
+        const output = [];
+        const ops = [];
+        for(let i=0;i<tokens.length;i++){
+          const t = tokens[i];
+          if(!isNaN(Number(t))){ output.push({type:'number', value: Number(t)}); continue; }
+          if(/pi/i.test(t)){ output.push({type:'number', value: Math.PI}); continue; }
+          if(/e/i.test(t)){ output.push({type:'number', value: Math.E}); continue; }
+          if(t === 'ANS') { output.push({type:'number', value: lastAnswer === '' ? 0 : Number(lastAnswer)}); continue; }
+          if(t === 'rand'){ output.push({type:'number', value: Math.random()}); continue; }
+          if(t === '%'){ // represent as unary percent\n            output.push({type:'op', value:'%'});\n            continue;
+          }
+          if(['sin','cos','tan','log','ln','sqrt','abs'].includes(t.toLowerCase())){ ops.push(t.toLowerCase()); continue; }
+          if(t === '('){ ops.push(t); continue; }
+          if(t === ')'){
+            while(ops.length && ops[ops.length-1] !== '('){ output.push({type:'op', value: ops.pop()}); }
+            if(ops.length && ops[ops.length-1] === '(') ops.pop();
+            // if function on top, pop it to output
+            if(ops.length && ['sin','cos','tan','log','ln','sqrt','abs'].includes(ops[ops.length-1])){
+              output.push({type:'op', value: ops.pop()});
+            }
+            continue;
+          }
+          // operators
+          if(['+','-','*','/','^'].includes(t)){
+            while(ops.length){
+              const top = ops[ops.length-1];
+              if(['sin','cos','tan','log','ln','sqrt','abs'].includes(top)){
+                output.push({type:'op', value: ops.pop()}); continue;
+              }
+              if(top === '(') break;
+              const topPrec = precedence[top] || 0;
+              const tPrec = precedence[t] || 0;
+              if( ( !rightAssoc[t] && tPrec <= topPrec) || (rightAssoc[t] && tPrec < topPrec) ){
+                output.push({type:'op', value: ops.pop()});
+              } else break;
+            }
+            ops.push(t);
+            continue;
+          }
+          // fallback unknown token
+        }
+        while(ops.length) output.push({type:'op', value: ops.pop()});
+        return output;
+      }
+
+      // Evaluate RPN
+      function evalRPN(rpn){
+        const st = [];
+        for(const tk of rpn){
+          if(tk.type === 'number') { st.push(tk.value); continue; }
+          const op = (tk.value !== undefined) ? tk.value : tk;
+          if(op === '%'){
+            // apply percent to last value
+            const a = st.pop(); st.push(a / 100); continue;
+          }
+          if(['+','-','*','/','^'].includes(op)){
+            const b = st.pop(); const a = st.pop();
+            if(a === undefined || b === undefined) return NaN;
+            switch(op){
+              case '+': st.push(a+b); break;
+              case '-': st.push(a-b); break;
+              case '*': st.push(a*b); break;
+              case '/': st.push(a/b); break;
+              case '^': st.push(Math.pow(a,b)); break;
+            }
+            continue;
+          }
+          // functions
+          switch(op){
+            case 'sin': st.push(Math.sin(st.pop())); break;
+            case 'cos': st.push(Math.cos(st.pop())); break;
+            case 'tan': st.push(Math.tan(st.pop())); break;
+            case 'sqrt': st.push(Math.sqrt(st.pop())); break;
+            case 'ln': st.push(Math.log(st.pop())); break;
+            case 'log': { const v = st.pop(); st.push(Math.log10 ? Math.log10(v) : Math.log(v)/Math.LN10); break; }
+            case 'abs': st.push(Math.abs(st.pop())); break;
+            default: return NaN;
+          }
+        }
+        return st.length ? st[st.length-1] : NaN;
+      }
+
+      // Evaluate an expression string safely
+      function evaluateExpression(s){
+        // Preprocess: replace unicode operators
+        s = s.replace(/×/g,'*').replace(/÷/g,'/').replace(/−/g,'-');
+        // Insert implicit multiplication: e.g. 2pi -> 2*pi, )(` or )( etc
+        s = s.replace(/(\d)(pi|e|\()/gi, '$1*$2');
+        s = s.replace(/(pi|e)(\d|\()/gi, '$1*$2');
+        // Normalize ANS
+        s = s.replace(/ANS/gi, 'ANS');
+        const rawTokens = tokenize(s);
+        // handle unary minus: convert leading -number or ( - to (0 - ...)
+        const tokens = [];
+        for(let i=0;i<rawTokens.length;i++){
+          const t = rawTokens[i];
+          if(t === '-' ){
+            if(i===0 || rawTokens[i-1] === '(' || ['+','-','*','/','^'].includes(rawTokens[i-1])){
+              tokens.push('0'); tokens.push('-'); continue;
+            }
+          }
+          tokens.push(t);
+        }
+        const rpn = toRPN(tokens);
+        const val = evalRPN(rpn);
+        return val;
+      }
+
+      // Button click handling
+      keys.addEventListener('click', e=>{
+        const btn = e.target.closest('button'); if(!btn) return;
+        const token = btn.dataset.token;
+        if(!token) return;
+        if(token === '='){ tryCompute(); return; }
+        if(token === 'AC'){ expression=''; lastAnswer=''; render(); return; }
+        if(token === 'del'){ expression = expression.slice(0,-1); render(); return; }
+        // special when token is labelled like data-token=="=" earlier, but dataset normalizes
+        appendToken(token);
+      });
+
+      // Keyboard support
+      window.addEventListener('keydown', e=>{
+        if(e.key === 'Enter'){ e.preventDefault(); tryCompute(); }
+        else if(e.key === 'Backspace'){ e.preventDefault(); expression = expression.slice(0,-1); render(); }
+        else if(e.key === 'Escape'){ e.preventDefault(); expression=''; lastAnswer=''; render(); }
+        else {
+          const allowed = '0123456789+-*/().^%';
+          if(allowed.includes(e.key)) { expression += e.key; render(); }
+          // functions shortcuts
+          const fk = e.key.toLowerCase();
+          if(fk === 's') expression += 'sin('; // quick type
+        }
+      });
+
+      function tryCompute(){
+        if(!expression) return;
+        try{
+          const val = evaluateExpression(expression);
+          if(Number.isNaN(val) || !isFinite(val)){
+            renderDisplay('Error');
+            return;
+          }
+          const rounded = Math.round((val + Number.EPSILON) * 1e12)/1e12; // limit precision
+          lastAnswer = String(rounded);
+          pushHistory(expression, lastAnswer);
+          renderDisplay(lastAnswer);
+          expression = '';
+          render();
+        }catch(err){ renderDisplay('Error'); }
+      }
+
+      function pushHistory(expr, result){
+        const item = {expr, result, time: new Date().toLocaleString()};
+        history.unshift(item);
+        if(history.length > 100) history.pop();
+        renderHistory();
+      }
+
+      function renderHistory(){
+        historyList.innerHTML = history.map(h => `<div class="hist-item"><div><strong>${escapeHtml(h.expr)}</strong></div><div><small>${h.time} · = ${h.result}</small></div></div>`).join('');
+      }
+
+      function escapeHtml(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+      function render(){ exprEl.textContent = expression || '\u00A0'; subEl.textContent = lastAnswer ? 'Últ: ' + lastAnswer : '\u00A0'; }
+
+      function renderDisplay(v){ displayEl.textContent = v; }
+
+      clearHistBtn.addEventListener('click', ()=>{ history = []; renderHistory(); });
+      exportHistBtn.addEventListener('click', ()=>{
+        const csv = history.map(h => `"${h.time}","${h.expr}","${h.result}"`).join('\n');
+        const blob = new Blob([csv], {type:'text/csv'});
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a'); a.href = url; a.download = 'historial_calculadora.csv'; a.click(); URL.revokeObjectURL(url);
+      });
+
+      // quick initial values
+      expression = '';
+      lastAnswer = '';
+      render();
+
+    })();
+  </script>
+</body>
+</html>
